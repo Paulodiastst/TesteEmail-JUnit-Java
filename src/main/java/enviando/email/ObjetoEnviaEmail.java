@@ -3,6 +3,8 @@ package enviando.email;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 import javax.activation.DataHandler;
@@ -110,20 +112,35 @@ public class ObjetoEnviaEmail {
 			corpoEmail.setText(textoEmail);
 		}
 
-		/* Parte 2 do e-mail que são os anexo em pdf */
-		MimeBodyPart anexoEmail = new MimeBodyPart();
-		
-		/*Onde é passado o simuladorDePDF você passa o seu arquivo gravado no banco de dados*/
-		anexoEmail.setDataHandler(new DataHandler(new ByteArrayDataSource(simuladorDePDF(), "application/pdf")));
-		anexoEmail.setFileName("anexoemail.pdf");
+		List<FileInputStream> arquivos = new ArrayList<FileInputStream>();
+		arquivos.add(simuladorDePDF());  /*Certificado*/
+		arquivos.add(simuladorDePDF());	 /*Nota fiscal*/
+		arquivos.add(simuladorDePDF());  /*Documento texto*/
+		arquivos.add(simuladorDePDF());  /*Imagem*/
 
-		
 		Multipart multipart = new MimeMultipart();
 		multipart.addBodyPart(corpoEmail);
-		multipart.addBodyPart(anexoEmail);
+		
+		
+		int index = 0;
+		for (FileInputStream fileInputStream : arquivos) {
+
+			/* Parte 2 do e-mail que são os anexo em pdf */
+			MimeBodyPart anexoEmail = new MimeBodyPart();
+
+			/*
+			 * Onde é passado o simuladorDePDF você passa o seu arquivo gravado no banco de
+			 * dados
+			 */
+			anexoEmail.setDataHandler(new DataHandler(new ByteArrayDataSource(fileInputStream, "application/pdf")));
+			anexoEmail.setFileName("anexoemail"+index+".pdf");
+
+			multipart.addBodyPart(anexoEmail);
+			
+			index++;
+		}
 
 		message.setContent(multipart);
-		
 
 		Transport.send(message);
 	}
@@ -137,7 +154,7 @@ public class ObjetoEnviaEmail {
 	 */
 
 	private FileInputStream simuladorDePDF() throws Exception {
-		
+
 		Document document = new Document();
 		File file = new File("fileanexo.pdf");
 		file.createNewFile();
